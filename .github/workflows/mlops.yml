@@ -154,7 +154,7 @@ jobs:
 
       - name: Copy source files to VM
         run: |
-          gcloud compute scp src/features.py src/serve.py mlops-serve:/home/ducanhtcp_gmail_com/src/ \
+          gcloud compute scp src/features.py src/serve.py mlops-serve:/tmp/ \
             --zone=us-central1-a \
             --project=ai-thuc-chien-505505 \
             --tunnel-through-iap \
@@ -166,5 +166,5 @@ jobs:
             --zone=us-central1-a \
             --project=ai-thuc-chien-505505 \
             --tunnel-through-iap \
-            --command="sudo systemctl restart mlops-serve && sleep 5 && curl -sf http://localhost:8000/health && echo 'Health check passed.' || exit 1" \
+            --command="sudo mv /tmp/features.py /tmp/serve.py /home/ducanhtcp_gmail_com/src/ && sudo systemctl restart mlops-serve && sleep 8 && curl -sf http://localhost:8000/health && echo 'Health check passed.'" \
             --quiet
