@@ -166,5 +166,5 @@ jobs:
             --zone=us-central1-a \
             --project=ai-thuc-chien-505505 \
             --tunnel-through-iap \
-            --command="sudo mv /tmp/features.py /tmp/serve.py /home/ducanhtcp_gmail_com/src/ && sudo systemctl restart mlops-serve && sleep 8 && curl -sf http://localhost:8000/health && echo 'Health check passed.'" \
+            --command="sudo mv /tmp/features.py /tmp/serve.py /home/ducanhtcp_gmail_com/src/ && sudo systemctl restart mlops-serve && sleep 20 && curl -sf http://localhost:8000/health && echo 'Health check passed.'" \
             --quiet
