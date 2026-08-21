@@ -1,5 +1,5 @@
 # Sieu tham so cho mo hinh RandomForestClassifier
-# Thay doi cac gia tri nay giua cac lan chay de thi nghiem (Buoc 1)
-n_estimators: 200
-max_depth: null
-min_samples_split: 5
+# Cac gia tri nay cho ket qua tot nhat voi wine feature engineering
+n_estimators: 500
+max_features: sqrt
+min_samples_leaf: 1

@@ -1,12 +1,17 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import mlflow
 import mlflow.sklearn
 import pandas as pd
 import yaml
 import json
 import joblib
-import os
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, f1_score
+from src.features import WineFeatureEngineer
 
 EVAL_THRESHOLD = 0.70
 
@@ -40,16 +45,22 @@ def train(
 
         mlflow.log_params(params)
 
-        model = RandomForestClassifier(**params, random_state=42)
-        model.fit(X_train, y_train)
+        pipeline = Pipeline([
+            ("features", WineFeatureEngineer()),
+            ("clf", RandomForestClassifier(**params, random_state=42)),
+        ])
+        pipeline.fit(X_train, y_train)
 
-        preds = model.predict(X_eval)
+        preds = pipeline.predict(X_eval)
         acc   = accuracy_score(y_eval, preds)
         f1    = f1_score(y_eval, preds, average="weighted")
 
         mlflow.log_metric("accuracy", acc)
         mlflow.log_metric("f1_score", f1)
-        mlflow.sklearn.log_model(model, "model")
+        mlflow.sklearn.log_model(
+            pipeline, "model",
+            skops_trusted_types=["src.features.WineFeatureEngineer"],
+        )
 
         print(f"Accuracy: {acc:.4f} | F1: {f1:.4f}")
 
@@ -58,7 +69,7 @@ def train(
             json.dump({"accuracy": acc, "f1_score": f1}, f)
 
         os.makedirs("models", exist_ok=True)
-        joblib.dump(model, "models/model.pkl")
+        joblib.dump(pipeline, "models/model.pkl")
 
     return acc
 
