@@ -43,6 +43,9 @@ jobs:
     name: Train
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       accuracy: ${{ steps.read_metrics.outputs.accuracy }}
 
@@ -56,10 +59,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Authenticate to Cloud Storage
-        run: |
-          echo '${{ secrets.CLOUD_CREDENTIALS }}' > /tmp/sa-key.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa-key.json" >> $GITHUB_ENV
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/15385592462/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: mlops-lab-sa@ai-thuc-chien-505505.iam.gserviceaccount.com
 
       - name: Pull data with DVC
         run: dvc pull data/train_phase1.csv.dvc data/eval.csv.dvc
@@ -88,6 +92,7 @@ jobs:
           EOF
         env:
           GCS_BUCKET: ${{ secrets.CLOUD_BUCKET }}
+          GOOGLE_CLOUD_PROJECT: ai-thuc-chien-505505
 
       - name: Save metrics as artifact
         uses: actions/upload-artifact@v4
@@ -123,22 +128,35 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # JOB 4 - DEPLOY
-  # Trien khai len VM qua SSH.
+  # Trien khai len VM qua gcloud compute ssh (OS Login / Workload Identity).
   # Chi chay khi Job 3 (Eval) hoan thanh thanh cong.
   # ---------------------------------------------------------------------------
   deploy:
     name: Deploy
     needs: eval
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
+      - uses: actions/checkout@v4
 
-      - name: SSH deploy to VM
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
         with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          script: |
-            sudo systemctl restart mlops-serve
-            sleep 5
-            curl -sf http://localhost:8000/health && echo "Health check passed." || exit 1
+          workload_identity_provider: projects/15385592462/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: mlops-lab-sa@ai-thuc-chien-505505.iam.gserviceaccount.com
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ai-thuc-chien-505505
+
+      - name: Deploy to VM via gcloud compute ssh
+        run: |
+          gcloud compute ssh mlops-serve \
+            --zone=us-central1-a \
+            --project=ai-thuc-chien-505505 \
+            --tunnel-through-iap \
+            --command="sudo systemctl restart mlops-serve && sleep 5 && curl -sf http://localhost:8000/health && echo 'Health check passed.' || exit 1" \
+            --quiet
