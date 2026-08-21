@@ -25,5 +25,3 @@ class WineFeatureEngineer(BaseEstimator, TransformerMixin):
             df[f'log_{col.replace(" ", "_")}'] = np.log1p(df[col])
 
         return df
-# trigger test Fri, Aug 21, 2026 12:13:17 PM
-# re-trigger 
