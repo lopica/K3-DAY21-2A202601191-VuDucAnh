@@ -1,5 +1,8 @@
 # Sieu tham so cho mo hinh RandomForestClassifier
-# Cac gia tri nay cho ket qua tot nhat voi wine feature engineering
+# Ket qua Buoc 1: thu nghiem 3 bo tham so, chon bo tot nhat
+# Exp1: n_estimators=50,  max_depth=5          -> acc=0.5880
+# Exp2: n_estimators=200, max_features=sqrt     -> acc=0.7440
+# Exp3: n_estimators=500, max_features=sqrt     -> acc=0.7640 (tot nhat)
 n_estimators: 500
 max_features: sqrt
 min_samples_leaf: 1
