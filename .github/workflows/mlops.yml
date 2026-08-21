@@ -152,6 +152,14 @@ jobs:
         with:
           project_id: ai-thuc-chien-505505
 
+      - name: Copy source files to VM
+        run: |
+          gcloud compute scp src/features.py src/serve.py mlops-serve:/home/ducanhtcp_gmail_com/src/ \
+            --zone=us-central1-a \
+            --project=ai-thuc-chien-505505 \
+            --tunnel-through-iap \
+            --quiet
+
       - name: Deploy to VM via gcloud compute ssh
         run: |
           gcloud compute ssh mlops-serve \
